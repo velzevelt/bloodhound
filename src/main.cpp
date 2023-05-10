@@ -1,114 +1,155 @@
+#include "enemies.cpp"
+#include "players.cpp"
+#include <algorithm>
+#include <cstdint>
+#include <cstdlib>
+#include <iostream>
 #include <raylib.h>
 #include <raymath.h>
-#include <iostream>
 
-
-void MovePlayerDebug(Rectangle &player);
+Vector2 MovePlayerDebug();
 void RickRoll();
 
+Enemies PrepareEnemies() {
+  const uint32_t MAX_ENEMIES = 300;
+  Enemies enemies;
+  for (int i = 0; i < MAX_ENEMIES; i++) {
+    Enemy enemy;
+    enemies.AddEnemy(enemy);
+  }
+
+  return enemies;
+}
+
+Players PreparePlayers() {
+  const uint32_t MAX_PLAYERS = 1;
+  Players players;
+  for (int i = 0; i < MAX_PLAYERS; i++) {
+    Player player;
+    players.AddPlayer(player);
+  }
+
+  return players;
+}
+
+void SpawnEnemies(Enemies &enemies) {
+  Vector2 prevPos = Vector2{0, 0};
+  int minDistance = 500;
+  for (auto &position : enemies.position) {
+    position.x += GetRandomValue(-1000, 1000);
+    position.y += GetRandomValue(-1000, 1000);
+
+    int respawnAttempts = 2500;
+    int i = 0;
+    while(i < respawnAttempts && Vector2Distance(position, prevPos) < minDistance) {
+        position.x = prevPos.x + GetRandomValue(-10000, 10000);
+        position.y = prevPos.y + GetRandomValue(-10000, 10000);
+        std::cout << "Respawned \n";
+
+        respawnAttempts++;
+        i++;
+    }
+
+
+    prevPos.x = position.x;
+    prevPos.y = position.y;
+  }
+}
 
 int main() {
+  SetRandomSeed(13231);
 
-    int initWindowWidth = 800;
-    int initWindowHeight = 600;
+  Enemies enemies = PrepareEnemies();
+  SpawnEnemies(enemies);
+  // for(auto t : enemies.position) {
+  //     std::cout << t.x << " " << t.y << '\n';
+  // }
 
-    SetConfigFlags(FLAG_VSYNC_HINT);
-    InitWindow(initWindowWidth, initWindowHeight, "Bloodhound");
+  Players players = PreparePlayers();
 
+  int initWindowWidth = 800;
+  int initWindowHeight = 600;
 
-    Rectangle player = {GetRenderWidth() / 2.0f, GetRenderHeight() / 2.0f, 40, 40};
+  SetConfigFlags(FLAG_VSYNC_HINT);
+  InitWindow(initWindowWidth, initWindowHeight, "Bloodhound");
 
-    Rectangle obstacle = player;
-    obstacle.x *= 1.5f;
-    obstacle.width *= 2;
-    obstacle.height *= 2;
-    
-    Camera2D camera;
-    camera.offset = Vector2{GetRenderWidth() / 2.0f - player.width, GetRenderHeight() / 2.0f - player.height};
-    camera.target = Vector2{player.x, player.y};
-    camera.rotation = 0.0f;
-    camera.zoom = 1.0f;
+  while (!WindowShouldClose()) {
 
-    while (!WindowShouldClose()) {
-        camera.target = Vector2{player.x, player.y};
-        
-        BeginDrawing();
-            ClearBackground(DARKGRAY);
+    BeginDrawing();
+    ClearBackground(DARKGRAY);
 
-            BeginMode2D(camera);
-                DrawRectangleRec(obstacle, LIGHTGRAY);
-                DrawRectangleRec(player, RED);
-            EndMode2D();
+    enemies.Draw();
+    for(int i = 0; i < players.GetSize(); ++i) {
+        Vector2* position = &players.position[i];
+        Rectangle* rect = &players.rect[i];
+        Color* color = &players.color[i];
 
-            MovePlayerDebug(player);
-            RickRoll();
-            DrawFPS(10, 10);
-        EndDrawing();
+        Vector2 newPos = MovePlayerDebug();
+
+        position->x += newPos.x * GetFrameTime() * 100;
+        position->y += newPos.y * GetFrameTime() * 100;
+        RectToPosition(*rect, *position);
+        DrawRectangleRec(*rect, *color);
     }
 
-    CloseWindow();
+    RickRoll();
+    DrawFPS(10, 10);
+    EndDrawing();
+  }
 
-    return 0;
+  CloseWindow();
+
+  return 0;
 }
 
+Vector2 MovePlayerDebug() {
+  Vector2 moveDirection = Vector2{0, 0};
 
-void MovePlayerDebug(Rectangle &player) {
-    Vector2 moveDirection = Vector2{0, 0};
+  if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) {
+    DrawText("A is pressed",
+             GetRenderWidth() - MeasureText("A is pressed", 15) - 10, 10, 15,
+             ORANGE);
+    moveDirection.x += -1;
+  }
+  if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) {
+    DrawText("D is pressed",
+             GetRenderWidth() - MeasureText("D is pressed", 15) - 10, 10 + 20,
+             15, ORANGE);
+    moveDirection.x += 1;
+  }
 
-    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) {
-        DrawText("A is pressed", GetRenderWidth() - MeasureText("A is pressed", 15) - 10,
-                 10,
-                 15,
-                 ORANGE
-        );
-        moveDirection.x += -1;
-    }
-    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) {
-        DrawText("D is pressed", GetRenderWidth() - MeasureText("D is pressed", 15) - 10,
-                 10 + 20,
-                 15,
-                 ORANGE
-        );
-        moveDirection.x += 1;
-    }
+  if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) {
+    DrawText("W is pressed",
+             GetRenderWidth() - MeasureText("W is pressed", 15) - 10, 30 + 20,
+             15, ORANGE);
+    moveDirection.y += -1;
+  }
+  if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) {
+    DrawText("S is pressed",
+             GetRenderWidth() - MeasureText("S is pressed", 15) - 10, 50 + 20,
+             15, ORANGE);
+    moveDirection.y += 1;
+  }
 
-    if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) {
-        DrawText("W is pressed", GetRenderWidth() - MeasureText("W is pressed", 15) - 10,
-                 30 + 20,
-                 15,
-                 ORANGE
-        );
-        moveDirection.y += -1;
-    }
-    if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) {
-        DrawText("S is pressed", GetRenderWidth() - MeasureText("S is pressed", 15) - 10,
-                 50 + 20,
-                 15,
-                 ORANGE
-        );
-        moveDirection.y += 1;
-    }
+  DrawText(TextFormat("inputVector: %f, %f", moveDirection.x, moveDirection.y),
+           20, 30, 14, YELLOW);
 
-    DrawText(TextFormat("inputVelocity: %f, %f", moveDirection.x, moveDirection.y), 20, 30, 14, YELLOW);
+  moveDirection = Vector2Normalize(moveDirection);
 
-    moveDirection = Vector2Normalize(moveDirection);
+  DrawText(
+      TextFormat("normalizedVector: %f, %f", moveDirection.x, moveDirection.y),
+      20, 30 * 2, 14, YELLOW);
 
-    DrawText(TextFormat("normalizedVector: %f, %f", moveDirection.x, moveDirection.y), 20, 30 * 2, 14, YELLOW);
+  DrawText(TextFormat("finalVector: %f, %f", moveDirection.x, moveDirection.y),
+           20, 30 * 3, 14, YELLOW);
 
-    moveDirection.x *= GetFrameTime() * 100;
-    moveDirection.y *= GetFrameTime() * 100;
-
-    DrawText(TextFormat("finalVector: %f, %f", moveDirection.x, moveDirection.y), 20, 30 * 3, 14, YELLOW);
-
-    player.x += moveDirection.x;
-    player.y += moveDirection.y;
+  return moveDirection;
 }
-
 
 void RickRoll() {
-    if (IsKeyPressed(KEY_SPACE)) {
-        OpenURL("https://customrickroll.github.io/");
-        //OpenURL("https://www.youtube.com/watch?v=dQw4w9WgXcQ?autoplay=1");
-        //OpenURL("https://shattereddisk.github.io/rickroll/rickroll.mp4");
-    }
+  if (IsKeyPressed(KEY_SPACE)) {
+    // OpenURL("https://customrickroll.github.io/");
+    OpenURL("https://www.youtube.com/watch?v=dQw4w9WgXcQ?autoplay=1");
+    // OpenURL("https://shattereddisk.github.io/rickroll/rickroll.mp4");
+  }
 }
