@@ -79,6 +79,7 @@ int main() {
     ClearBackground(DARKGRAY);
 
     enemies.Draw();
+
     for(int i = 0; i < players.GetSize(); ++i) {
         Vector2* position = &players.position[i];
         Rectangle* rect = &players.rect[i];
@@ -86,8 +87,15 @@ int main() {
 
         Vector2 newPos = MovePlayerDebug();
 
+        if(IsKeyDown(KEY_LEFT_SHIFT)) {
+            newPos.x *= 2;
+            newPos.y *= 2;
+        }
+
         position->x += newPos.x * GetFrameTime() * 100;
         position->y += newPos.y * GetFrameTime() * 100;
+
+
         RectToPosition(*rect, *position);
         DrawRectangleRec(*rect, *color);
     }
