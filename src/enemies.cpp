@@ -7,7 +7,7 @@
 struct Enemy {
     float health = 100;
     Vector2 position = {0, 0};
-    Rectangle rect = {position.x, position.y, 40, 40};
+    Rectangle rect = {position.x, position.y, 20, 20};
     Color color = DARKBLUE;
 };
 

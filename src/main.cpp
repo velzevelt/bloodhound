@@ -11,7 +11,7 @@ Vector2 MovePlayerDebug();
 void RickRoll();
 
 Enemies PrepareEnemies() {
-  const uint32_t MAX_ENEMIES = 300;
+  const uint32_t MAX_ENEMIES = 1000;
   Enemies enemies;
   for (int i = 0; i < MAX_ENEMIES; i++) {
     Enemy enemy;
@@ -34,19 +34,18 @@ Players PreparePlayers() {
 
 void SpawnEnemies(Enemies &enemies) {
   Vector2 prevPos = Vector2{0, 0};
-  int minDistance = 500;
+  int minDistance = 150;
   for (auto &position : enemies.position) {
     position.x += GetRandomValue(-1000, 1000);
     position.y += GetRandomValue(-1000, 1000);
 
-    int respawnAttempts = 2500;
+    const int respawnAttempts = 2500;
     int i = 0;
-    while(i < respawnAttempts && Vector2Distance(position, prevPos) < minDistance) {
-        position.x = prevPos.x + GetRandomValue(-10000, 10000);
-        position.y = prevPos.y + GetRandomValue(-10000, 10000);
-        std::cout << "Respawned \n";
+    while(Vector2DistanceSqr(prevPos, position) < minDistance*minDistance && i < respawnAttempts) {
+        position.x += GetRandomValue(-10000, 10000);
+        position.y += GetRandomValue(-10000, 10000);
+        std::cout << "Respawned" << i << '\n';
 
-        respawnAttempts++;
         i++;
     }
 
@@ -61,9 +60,7 @@ int main() {
 
   Enemies enemies = PrepareEnemies();
   SpawnEnemies(enemies);
-  // for(auto t : enemies.position) {
-  //     std::cout << t.x << " " << t.y << '\n';
-  // }
+
 
   Players players = PreparePlayers();
 
