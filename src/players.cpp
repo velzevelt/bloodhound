@@ -32,6 +32,8 @@ struct Players {
     int GetSize() {
         return position.size();
     }
+
+
 };
 
 void RectToPosition(Rectangle &rect, Vector2 &position) {
